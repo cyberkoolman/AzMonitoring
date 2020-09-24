@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -10,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using ResourceHealthAlertPOC.Models;
 using ResourceHealthAlertPOC.Util;
-using ActivityAlertPOC.Models;
 using Microsoft.Azure.Cosmos;
 
 
@@ -74,8 +72,8 @@ namespace ResourceHealthAlertPOC
                     log.LogError($"Unable to get location for {alertObj.resourceId}");
                 }
                 -------------------------------------- */
-                alertObj.location = "US East 2";
-                alertHistoryObj.location = "US East 2";
+                alertObj.location = "eastus2";
+                alertHistoryObj.location = "eastus2";
                 /* ----------------------------------- */
 
                 var collectionId = GetEnvironmentVariable("CosmosDb_Collection");
@@ -84,7 +82,7 @@ namespace ResourceHealthAlertPOC
 
                 try
                 {
-                    ItemResponse<ResourceHealthDto> response = await client.GetContainer(databaseId, collectionId).UpsertItemAsync(alertObj, new PartitionKey(alertObj.id));
+                    ItemResponse<ResourceHealthDto> response = await client.GetContainer(databaseId, collectionId).UpsertItemAsync(alertObj, new PartitionKey(alertObj.resourceId));
                     log.LogInformation("Document created in Cosmos: " + response.StatusCode);
                 }
                 catch(CosmosException ex)    
