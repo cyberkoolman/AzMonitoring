@@ -10,7 +10,8 @@ using Newtonsoft.Json;
 using ResourceHealthAlertPOC.Models;
 using ResourceHealthAlertPOC.Util;
 using Microsoft.Azure.Cosmos;
-
+using System.Collections.Generic;
+using ActivityAlertPOC.Models;
 
 namespace ResourceHealthAlertPOC
 {
@@ -42,7 +43,6 @@ namespace ResourceHealthAlertPOC
                 log.LogInformation("Resource Id: " + alertObj.resourceId);
                 log.LogInformation("Resource Status: " + alertObj.currentHealthStatus);
 
-                /* ---- Access Token Processing -----
                 try
                 {
                     List<string> subs = new List<string>
@@ -51,7 +51,14 @@ namespace ResourceHealthAlertPOC
                     };
                     string token = AuthHelper.GetTokenAsync().Result;
                     log.LogInformation($"Token Received: {token}");
-                    string resourceGraphUri = "https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=2018-09-01-preview";
+
+                    /*  Below is to do the quick testing for resolution of access token
+                    string linkId = "subscriptions/a7f5830b-4c53-4a55-a641-bc07ef502ab2/resourcegroups/rp-gmsa-rg/providers/microsoft.compute/virtualmachines/rpwinapp01";
+                    string resourceGraphUri = $"https://management.azure.com/{linkId}?api-version=2016-09-01";
+                    ResourceGraphResponse resourcesGraph = await ResilientRestClient.GetAsync<ResourceGraphResponse>(resourceGraphUri, token);
+                    */
+
+                    string resourceGraphUri = "https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=2019-04-01";
                     string query = $"where id =~ '{alertObj.resourceId}' | project location";
                     Dictionary<string, int> options = new Dictionary<string, int>();
                     options["$skip"] = 0;
@@ -67,14 +74,10 @@ namespace ResourceHealthAlertPOC
                 }
                 catch (System.Exception)
                 {
-                    alertObj.location = "N/A";
-                    alertHistoryObj.location = "N/A";
-                    log.LogError($"Unable to get location for {alertObj.resourceId}");
+                    alertObj.location = "NA";
+                    alertHistoryObj.location = "NA";
+                    log.LogError($"Unable to get location for {alertObj.resourceId}.  Set default for NA location");
                 }
-                -------------------------------------- */
-                alertObj.location = "eastus2";
-                alertHistoryObj.location = "eastus2";
-                /* ----------------------------------- */
 
                 var collectionId = GetEnvironmentVariable("CosmosDb_Collection");
                 var databaseId = GetEnvironmentVariable("CosmosDb_Database");
@@ -105,11 +108,8 @@ namespace ResourceHealthAlertPOC
             }
             else
             {
-                /* ----------- Comment out for now -----------------
-
                 var activitylog = JsonConvert.DeserializeObject<ActivityLogAlert>(requestBody);
-                log.LogInformation(activitylog.schemaId);
-                
+                log.LogInformation(activitylog.schemaId);                
 
                 var alertObj = CosmosHelper.GetActivityLogAlertDtoMapping(activitylog,log);
 
@@ -172,8 +172,6 @@ namespace ResourceHealthAlertPOC
                 {
                     log.LogInformation("error created in Cosmos: " + ex.Message);
                 }
-
-                ------------------------------------------------------- */ 
             }
 
             return new OkObjectResult("Resource Health Alert Processed");
@@ -184,7 +182,5 @@ namespace ResourceHealthAlertPOC
         {
             return Environment.GetEnvironmentVariable(variableName);
         }
-
-   
     }
 }

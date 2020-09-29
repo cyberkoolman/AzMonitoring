@@ -27,6 +27,5 @@ namespace ResourceHealthAlertPOC.Util
             }
             return result.AccessToken;
         }
-
     }
 }
